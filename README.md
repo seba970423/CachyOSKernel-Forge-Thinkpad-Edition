@@ -92,12 +92,14 @@ package-specific dependencies through `pacman`.
 Run the complete workflow:
 
 ```bash
+git clone https://github.com/seba970423/CachyOSKernel-Forge-Thinkpad-Edition
 ./builder.sh
 ```
 
 Run configuration preparation and validation without compiling or installing:
 
 ```bash
+git clone https://github.com/seba970423/CachyOSKernel-Forge-Thinkpad-Edition
 ./builder-dry-run.sh
 ```
 
