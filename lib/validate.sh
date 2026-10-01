@@ -197,6 +197,30 @@ validate_kernel_policy() {
             ;;
     esac
 
+    # Desktop-style latency tuning. CachyOS ships HZ_1000/SCHED_AUTOGROUP on
+    # and THP in "always" mode by default, so declining this feature must
+    # leave those exactly as upstream/baseline set them -- not force them off.
+    if [[ "${ENABLE_LATENCY_TUNING:-no}" == "yes" ]]; then
+        validate_enabled_bool "$config" HZ_1000 || return 1
+        validate_enabled_bool "$config" SCHED_AUTOGROUP || return 1
+    else
+        validate_preserved "$baseline" "$config" HZ_1000 || return 1
+        validate_preserved "$baseline" "$config" SCHED_AUTOGROUP || return 1
+    fi
+
+    # TRANSPARENT_HUGEPAGE carries "depends on ... && !PREEMPT_RT" upstream,
+    # so on an RT kernel it is never controllable by this policy: it is
+    # invisible/absent regardless of what we asked for, and that is correct,
+    # not a failure.
+    if [[ "$(config_state "$config" PREEMPT_RT)" == "y" ]]; then
+        printf '    OK  CONFIG_TRANSPARENT_HUGEPAGE not applicable (PREEMPT_RT kernel)\n'
+    elif [[ "${ENABLE_LATENCY_TUNING:-no}" == "yes" ]]; then
+        validate_enabled_bool "$config" TRANSPARENT_HUGEPAGE || return 1
+        validate_enabled_bool "$config" TRANSPARENT_HUGEPAGE_MADVISE || return 1
+    else
+        validate_preserved "$baseline" "$config" TRANSPARENT_HUGEPAGE || return 1
+    fi
+
     if [[ "${KEEP_NVME_FABRICS:-yes}" == "yes" ]]; then
         for symbol in NVME_FABRICS NVME_RDMA NVME_FC NVME_TCP; do
             validate_preserved "$baseline" "$config" "$symbol" || return 1

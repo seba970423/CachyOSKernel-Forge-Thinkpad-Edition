@@ -78,6 +78,19 @@ resolve_virtualization_policy() {
     fi
 }
 
+resolve_latency_policy() {
+    ENABLE_LATENCY_TUNING="$DEFAULT_ENABLE_LATENCY_TUNING"
+
+    if ask_yes_no \
+        "Enable desktop-style latency tuning (assert 1000Hz tick and scheduler autogrouping; switch transparent hugepages from CachyOS's default 'always' to 'madvise')?" \
+        "$DEFAULT_ENABLE_LATENCY_TUNING"
+    then
+        ENABLE_LATENCY_TUNING="yes"
+    else
+        ENABLE_LATENCY_TUNING="no"
+    fi
+}
+
 resolve_nvme_policy() {
     if ask_yes_no \
         "Keep NVMe-over-Fabrics support?" \
@@ -100,6 +113,7 @@ resolve_nvme_policy() {
 
 resolve_policy() {
     resolve_virtualization_policy
+    resolve_latency_policy
     resolve_nvme_policy
 }
 
@@ -110,6 +124,7 @@ print_policy_summary() {
     printf '    AMD SEV:             %s\n' "$KEEP_AMD_SEV"
     printf '    Target hardware:     universal ThinkPad allowlist\n'
     printf '    Graphics/Wi-Fi/I/O:  preserve ThinkPad allowlist\n'
+    printf '    Latency tuning:      %s\n' "$ENABLE_LATENCY_TUNING"
     printf '    NVMe Fabrics:        %s\n' "$KEEP_NVME_FABRICS"
     printf '    NVMe Target:         %s\n' "$KEEP_NVME_TARGET"
 }

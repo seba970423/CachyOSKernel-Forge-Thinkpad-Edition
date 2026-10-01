@@ -8,6 +8,7 @@
 #   KEEP_AMD_SEV
 #   KEEP_NVME_FABRICS
 #   KEEP_NVME_TARGET
+#   ENABLE_LATENCY_TUNING
 
 kconfig_require_tree() {
     local tree="$1"
@@ -76,6 +77,21 @@ kconfig_disable_if_present() {
 
     if kconfig_symbol_exists "$tree" "$symbol"; then
         kconfig_disable "$tree" "$symbol"
+    fi
+}
+
+kconfig_state() {
+    local config="$1"
+    local symbol="$2"
+
+    if grep -q "^CONFIG_${symbol}=y$" "$config"; then
+        printf 'y'
+    elif grep -q "^CONFIG_${symbol}=m$" "$config"; then
+        printf 'm'
+    elif grep -q "^# CONFIG_${symbol} is not set$" "$config"; then
+        printf 'n'
+    else
+        printf 'absent'
     fi
 }
 
@@ -155,6 +171,51 @@ kconfig_apply_policy() {
     if [[ "$CPU_VENDOR" == "amd" && "${KEEP_AMD_SEV:-yes}" == "no" ]]; then
         kconfig_require_symbol "$tree" KVM_AMD_SEV || return 1
         kconfig_disable "$tree" KVM_AMD_SEV || return 1
+    fi
+
+    # --- Desktop-style latency tuning (opt-in) ---
+    #
+    # CachyOS already ships HZ_1000 and SCHED_AUTOGROUP enabled by default
+    # (confirmed against the T590 reference config), and THP on in "always"
+    # mode. So declining this feature must NOT force any of them off --
+    # that would be an active regression below upstream's own tuning, not a
+    # neutral no-op. This toggle only ever *asserts* the tuned settings when
+    # accepted; when declined, it leaves the upstream/baseline state exactly
+    # as olddefconfig produced it (checked in validate.sh via validate_preserved).
+    #
+    # THP is the one setting where "accept" is a real behavior change: it
+    # switches from CachyOS's default "always" mode to "madvise" (per-process
+    # opt-in), trading a little THP coverage for fewer khugepaged compaction
+    # stalls. HZ_1000/SCHED_AUTOGROUP enables below are mostly a no-op given
+    # the shipped default, kept only as a safety net for variants (hardened,
+    # server, etc.) that may not default the same way.
+    #
+    # PREEMPT_RT carries an upstream "depends on ... && !PREEMPT_RT" on
+    # TRANSPARENT_HUGEPAGE (added by the RT maintainers: khugepaged
+    # compaction and hugepage-aligned faults introduce non-deterministic
+    # latency that RT threads can't tolerate). Forcing it on there doesn't
+    # fail loudly -- olddefconfig just drops the symbol to invisible/absent
+    # afterwards -- so we detect RT and skip THP outright rather than write
+    # a config line the kernel will silently discard. (This project offers
+    # the same rt-bore variant as the desktop builder, via the shared
+    # CachyOS upstream repo.)
+
+    if [[ "${ENABLE_LATENCY_TUNING:-no}" == "yes" ]]; then
+        kconfig_require_symbol "$tree" HZ_1000 || return 1
+        kconfig_enable "$tree" HZ_1000 || return 1
+
+        kconfig_require_symbol "$tree" SCHED_AUTOGROUP || return 1
+        kconfig_enable "$tree" SCHED_AUTOGROUP || return 1
+
+        if [[ "$(kconfig_state "$tree/.config" PREEMPT_RT)" == "y" ]]; then
+            printf '==> Skipping TRANSPARENT_HUGEPAGE: this kernel is PREEMPT_RT, which upstream excludes THP from (non-deterministic RT latency).\n'
+        else
+            kconfig_require_symbol "$tree" TRANSPARENT_HUGEPAGE || return 1
+            kconfig_require_symbol "$tree" TRANSPARENT_HUGEPAGE_MADVISE || return 1
+
+            kconfig_enable "$tree" TRANSPARENT_HUGEPAGE || return 1
+            kconfig_enable "$tree" TRANSPARENT_HUGEPAGE_MADVISE || return 1
+        fi
     fi
 
     # --- User-controlled specialized NVMe roles ---
