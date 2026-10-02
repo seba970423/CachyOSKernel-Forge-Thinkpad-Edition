@@ -174,8 +174,6 @@ main() {
 
     resolve_policy
     printf '\n'
-    print_policy_summary
-    printf '\n'
 
     local workdir
     local checkout
@@ -209,7 +207,7 @@ main() {
 
     printf '==> Prepared kernel tree: %s\n' "$tree"
 
-    configure_and_validate_kernel "$tree"
+    configure_and_validate_kernel "$tree" "$variant"
 
     printf '\n'
     printf '==> CONFIGURATION VALIDATION PASSED.\n'

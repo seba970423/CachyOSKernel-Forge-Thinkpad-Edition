@@ -38,7 +38,7 @@ CPU_VENDOR="intel"
 KEEP_KVM="yes"
 KEEP_INTEL_TDX="yes"
 KEEP_AMD_SEV="yes"
-ENABLE_LATENCY_TUNING="no"
+KERNEL_HZ="upstream"
 KEEP_NVME_FABRICS="yes"
 KEEP_NVME_TARGET="yes"
 
@@ -46,19 +46,7 @@ mkdir -p "$TEST_TMPDIR/tree"
 cp "$FINAL" "$TEST_TMPDIR/tree/.config"
 validate_kernel_policy "$TEST_TMPDIR/tree" "$BASELINE" >/dev/null
 
-# Declining latency tuning must preserve CachyOS's own defaults (HZ_1000,
-# SCHED_AUTOGROUP and THP=always are all already =y in the T590 reference),
-# not force them off. Re-run with the reference's actual latency-related
-# state intact on both sides to prove the "preserve" branch actually holds.
-ENABLE_LATENCY_TUNING="yes"
-sed -i \
-    -e 's/^CONFIG_TRANSPARENT_HUGEPAGE_ALWAYS=y$/# CONFIG_TRANSPARENT_HUGEPAGE_ALWAYS is not set/' \
-    -e 's/^# CONFIG_TRANSPARENT_HUGEPAGE_MADVISE is not set$/CONFIG_TRANSPARENT_HUGEPAGE_MADVISE=y/' \
-    "$TEST_TMPDIR/tree/.config"
-validate_kernel_policy "$TEST_TMPDIR/tree" "$BASELINE" >/dev/null
-
-# On a PREEMPT_RT kernel, THP is upstream-unsatisfiable (absent), and
-# latency-tuning acceptance must not try to require it.
+# RT-style absence of THP is preserved, not forced on.
 sed -i \
     -e 's/^# CONFIG_PREEMPT_RT is not set$/CONFIG_PREEMPT_RT=y/' \
     -e '/^CONFIG_TRANSPARENT_HUGEPAGE/d' \
@@ -72,7 +60,7 @@ CPU_VENDOR="intel"
 KEEP_KVM="yes"
 KEEP_INTEL_TDX="yes"
 KEEP_AMD_SEV="yes"
-ENABLE_LATENCY_TUNING="no"
+KERNEL_HZ="upstream"
 KEEP_NVME_FABRICS="yes"
 KEEP_NVME_TARGET="yes"
 validate_kernel_policy "$TEST_TMPDIR/tree" "$BASELINE" >/dev/null

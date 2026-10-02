@@ -81,6 +81,40 @@ hibernation disabled while the other tested variants retain it.
 
 ## Usage
 
+### Kernel tick frequency
+
+After variant selection and source preparation, both the full builder and
+dry-run ask for `upstream`, `100`, `250`, `300`,
+or `1000` Hz. Press Enter to preserve the selected variant's upstream
+frequency. An explicit frequency is checked against the selected kernel
+source; unavailable choices fail before compilation. After `olddefconfig`,
+validation checks both the frequency choice and the numeric `CONFIG_HZ` value.
+
+Tick frequency is independent of the other options. The existing
+`TICKRATE=idle` profile controls tickless mode; it is not a frequency in Hz.
+
+### Optional autogrouping and transparent hugepages
+
+These independent prompts appear after selecting, preparing, and normalizing
+the kernel. Support is checked by resolving a separate trial configuration;
+the upstream baseline remains untouched.
+
+- Autogrouping is offered only when Kconfig permits it, including RT variants.
+  BMQ and other `SCHED_ALT` configurations never get this prompt.
+- Transparent hugepages (THP) are offered only for non-RT variants where Kconfig
+  permits THP and its `madvise` mode. RT variants never get this prompt.
+- Each prompt defaults to **no**. `n`, Enter, or EOF preserves the selected
+  kernel's upstream setting, whether enabled, disabled, or absent.
+- `y` enables autogrouping, or enables THP with `madvise` as its kernel default.
+  THP `madvise` uses hugepages for applications that explicitly request them.
+
+After dependency resolution, validation checks the requested settings or exact
+preservation of declined settings. These options do not write sysctl/sysfs
+settings or modify userspace services.
+
+The former combined latency-tuning toggle has been removed.
+
+
 `pciutils` is optional. When `lspci` is available, KernelForge prints a richer
 diagnostic hardware summary; its absence never changes policy or blocks a
 build.
@@ -102,19 +136,19 @@ Run configuration preparation and validation without compiling or installing:
 ```bash
 git clone https://github.com/seba970423/CachyOSKernel-Forge-Thinkpad-Edition
 cd CachyOSKernel-Forge-Thinkpad-Edition
-./builder.sh
+./builder-dry-run.sh
 ```
 
 Both workflows:
 
 1. validate the ThinkPad profile;
 2. display host diagnostics;
-3. resolve the user-controlled general-capability policy;
+3. resolve the general-capability policy;
 4. clone the latest CachyOS kernel packaging repository;
 5. select an upstream kernel variant;
 6. optionally rename the selected kernel/package;
 7. prepare its source tree;
-8. normalize the upstream Kconfig baseline;
+8. normalize the upstream Kconfig baseline and ask for supported optional tuning;
 9. apply the ThinkPad profile and feature policy;
 10. resolve Kconfig dependencies;
 11. validate the final configuration.
@@ -153,6 +187,8 @@ inspection.
     ├── test-hardware-detection.sh
     ├── test-kernel-naming.sh
     ├── test-policy-prompts.sh
+    ├── test-optional-tuning.sh
+    ├── test-tick-frequency.sh
     ├── test-validation-paths.sh
     └── validate-reference.sh
 ```

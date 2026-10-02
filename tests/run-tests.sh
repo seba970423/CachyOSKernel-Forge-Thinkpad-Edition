@@ -15,5 +15,7 @@ bash -n \
 "$SCRIPT_DIR/test-policy-prompts.sh"
 "$SCRIPT_DIR/test-kernel-naming.sh"
 "$SCRIPT_DIR/test-validation-paths.sh"
+"$SCRIPT_DIR/test-tick-frequency.sh"
+"$SCRIPT_DIR/test-optional-tuning.sh"
 
 printf 'All KernelForge ThinkPad Edition tests passed.\n'

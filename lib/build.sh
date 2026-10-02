@@ -76,7 +76,7 @@ prepare_upstream_source() {
 }
 
 configure_and_validate_kernel() {
-    local tree="$1"
+    local tree="$1" variant="$2"
     local baseline="$tree/.config.kernelforge-normalized-baseline"
 
     kconfig_require_tree "$tree"
@@ -84,6 +84,10 @@ configure_and_validate_kernel() {
     printf '==> Normalizing upstream Kconfig baseline...\n'
     make -C "$tree" olddefconfig
     cp "$tree/.config" "$baseline"
+
+    resolve_kernel_tuning_policy "$tree" "$variant"
+    print_policy_summary
+    printf '\n'
 
     printf '==> Applying universal ThinkPad profile...\n'
     kconfig_apply_profile "$tree"
