@@ -13,6 +13,7 @@ source "$REPO_ROOT/lib/hardware.sh"
 source "$REPO_ROOT/lib/policy.sh"
 source "$REPO_ROOT/lib/kconfig.sh"
 source "$REPO_ROOT/lib/validate.sh"
+source "$REPO_ROOT/lib/debug-compression.sh"
 source "$REPO_ROOT/lib/cleanup.sh"
 
 ask_compile() {
@@ -100,6 +101,19 @@ compile_selected_kernel() {
 
     printf '==> Built package output:\n'
     printf '    %s\n' "${packages[@]}"
+
+    # Post-build disk-usage snapshot for comparing identical debug modes.
+    # This does not measure the actual peak during compilation.
+    if command -v du >/dev/null 2>&1; then
+        local usage_report="$package_dir/.kernelforge-space-report.txt" path
+        : >"$usage_report"
+        for path in "$package_dir/src" "$package_dir/pkg" "$TMPDIR"; do
+            [[ ! -d "$path" ]] || du -sh -- "$path" >>"$usage_report" 2>/dev/null || true
+        done
+        printf '==> Post-build disk usage snapshot (not peak):\n'
+        cat "$usage_report"
+        printf '==> Saved disk usage report: %s\n' "$usage_report"
+    fi
 }
 
 ask_install() {

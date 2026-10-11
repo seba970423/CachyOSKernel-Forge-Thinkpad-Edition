@@ -13,6 +13,7 @@ source "$REPO_ROOT/lib/hardware.sh"
 source "$REPO_ROOT/lib/policy.sh"
 source "$REPO_ROOT/lib/kconfig.sh"
 source "$REPO_ROOT/lib/validate.sh"
+source "$REPO_ROOT/lib/debug-compression.sh"
 
 main() {
     require_build_commands
