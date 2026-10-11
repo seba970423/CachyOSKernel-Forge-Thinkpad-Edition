@@ -86,7 +86,9 @@ configure_and_validate_kernel() {
     cp "$tree/.config" "$baseline"
 
     resolve_kernel_tuning_policy "$tree" "$variant"
+    kernelforge_choose_dwarf_zstd "$tree" || return 1
     print_policy_summary
+    printf '==> Optional DWARF Zstd compression selected: %s\n' "${KERNELFORGE_DWARF_ZSTD:-no}"
     printf '\n'
 
     printf '==> Applying universal ThinkPad profile...\n'
@@ -94,9 +96,11 @@ configure_and_validate_kernel() {
 
     printf '==> Applying resolved feature policy...\n'
     kconfig_apply_policy "$tree"
+    kernelforge_apply_dwarf_zstd "$tree" || return 1
 
     printf '==> Resolving Kconfig dependencies...\n'
     make -C "$tree" olddefconfig
 
     validate_kernel_policy "$tree" "$baseline"
+    kernelforge_validate_dwarf_zstd "$baseline" "$tree/.config" || return 1
 }

@@ -160,6 +160,25 @@ Build work and compiler temporary files are placed below `/var/tmp`, avoiding
 small tmpfs-backed `/tmp` mounts. Work trees are intentionally retained for
 inspection.
 
+### Optional smaller build artifacts (DWARF Zstandard)
+
+When the selected kernel enables DWARF debugging information and the toolchain
+supports Zstandard-compressed DWARF, the full builder and dry-run offer an
+optional compression prompt. The default is **No**, preserving upstream
+configuration. The option is withheld if Kconfig cannot resolve it without
+changing DWARF version or BTF support. A broken Kconfig probe aborts safely.
+
+Enabling compression changes only the compression mode of the generated debug
+sections. It does **not** disable debug information, BTF, kernel modules or
+hardware support. Disk-space savings vary by kernel, toolchain and config.
+
+The full builder also retains a `.kernelforge-space-report.txt` snapshot of
+generated `src/`, `pkg/` and compiler-temp sizes after compilation. This is a
+**post-build snapshot, not a measured peak**; benchmark builds with identical
+kernel sources/configuration (except this option) before drawing conclusions.
+The existing optional post-install cleanup is independent of compression.
+
+
 ## Project layout
 
 ```text
