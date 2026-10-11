@@ -17,5 +17,6 @@ bash -n \
 "$SCRIPT_DIR/test-validation-paths.sh"
 "$SCRIPT_DIR/test-tick-frequency.sh"
 "$SCRIPT_DIR/test-optional-tuning.sh"
+"$SCRIPT_DIR/test-postinstall-cleanup.sh"
 
 printf 'All KernelForge ThinkPad Edition tests passed.\n'
