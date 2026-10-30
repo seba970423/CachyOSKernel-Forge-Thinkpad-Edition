@@ -20,4 +20,6 @@ bash -n \
 "$SCRIPT_DIR/test-postinstall-cleanup.sh"
 bash "$SCRIPT_DIR/test-debug-compression.sh"
 
+bash "$SCRIPT_DIR/test-sched-compat.sh"
+
 printf 'All KernelForge ThinkPad Edition tests passed.\n'
