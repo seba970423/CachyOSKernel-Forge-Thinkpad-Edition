@@ -272,3 +272,20 @@ This is the first ThinkPad-specific profile derived from the proven desktop
 builder. The universal allowlist will be expanded conservatively as additional
 ThinkPad generations and hardware combinations are audited. Absence from one
 captured machine is never sufficient justification for removing support.
+  
+## BORE scheduler preflight (CachyOS 7.3)
+
+Before the full build, KernelForge checks the prepared `kernel/sched/fair.c`
+when `CONFIG_SCHED_BORE=y`. On the affected 7.3.1 sources,
+`update_protect_slice()` refers to `normalized_sysctl_sched_base_slice`,
+which the BORE patch only declares in the non-BORE branch. KernelForge applies
+a narrowly scoped, conditional source fix that uses
+`sysctl_sched_base_slice` for BORE while preserving the non-BORE code.
+Unknown layouts fail closed; an upstream-corrected function is left unchanged.
+
+The builder then compiles `kernel/sched/fair.o` using one job as an early
+smoke test before the full build. Diagnostic logs remain in the build work tree
+(`.kernelforge-sched-smoke.log` and `.kernelforge-build.log`). The first
+meaningful compiler errors are shown rather than only the last 120 lines.
+The config-only dry-run does not compile anything. No kernel is installed
+automatically.
