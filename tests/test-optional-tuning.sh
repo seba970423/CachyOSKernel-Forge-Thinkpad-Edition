@@ -6,8 +6,9 @@ source "$REPO_ROOT/lib/profile.sh"
 source "$REPO_ROOT/lib/policy.sh"
 source "$REPO_ROOT/lib/kconfig.sh"
 source "$REPO_ROOT/lib/validate.sh"
+source "$REPO_ROOT/lib/debug-compression.sh"
 TEST_TMPDIR="$(mktemp -d --tmpdir kernelforge-tuning-test.XXXXXX)"
-trap 'rm -rf -- "$TEST_TMPDIR"' EXIT
+trap 'status=$?; if (( status != 0 )) && [[ -f "${OUTPUT:-}" ]]; then printf "Last captured tuning output:\n" >&2; tail -n 100 "$OUTPUT" >&2; fi; rm -rf -- "$TEST_TMPDIR"' EXIT
 TREE="$TEST_TMPDIR/tree"
 BASELINE="$TEST_TMPDIR/baseline"
 OUTPUT="$TEST_TMPDIR/output"
